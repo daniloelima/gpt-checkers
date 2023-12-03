@@ -1,0 +1,63 @@
+.background {
+    height: 100vh;
+    background-size: contain;
+    background-color: #121212;
+    background-repeat: no-repeat;
+    background-position-x: right;
+    background-image: url('../../../assets/cover.png');
+}
+
+section {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    padding: auto;
+    color: white;
+    align-items: center;
+    flex-flow: column wrap;
+    justify-content: center;
+}
+
+section > h1 {
+    width: 70%;
+    font-size: 6em;
+    text-align: center;
+    line-height: normal;
+}
+
+section > p {
+    width: 70%;
+    height: auto;
+    font-size: 2em;
+    text-align: center;
+    line-height: normal;
+    text-align: start;
+}
+
+section > button {
+    height: 70px;
+    width: 120px;
+    font-size: 24px !important;
+    background-color: #a0b4c3;
+}
+
+@media (max-width: 1040px) {
+    .background {
+        background-position-y: bottom;
+        background-size: cover;
+    }
+
+    section {
+        width: 100%;
+        height: 100%;
+        color: saddlebrown;
+    }
+    section > p {
+
+        display: none;
+    }
+
+    section > button {
+        background-color: saddlebrown;
+    }
+}
