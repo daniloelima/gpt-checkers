@@ -32,7 +32,7 @@ class Damas():
             for j in range(8):
                 if tabuleiro[i][j] == 'b' or tabuleiro[i][j] == 'B':
                     b += 1
-                elif tabuleiro[i][j] == 'b' or tabuleiro[i][j] == 'B':
+                elif tabuleiro[i][j] == 'w' or tabuleiro[i][j] == 'W':
                     w += 1
         
         if b == 0 or w == 0:
