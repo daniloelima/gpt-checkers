@@ -8,6 +8,10 @@
     background-color: #f5faff;
 }
 
+.highlight {
+    background-color: coral;
+}
+
 .black-piece {
     background-image: url('../../../assets/black-checker/standard.png');
     background-size: contain;
