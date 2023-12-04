@@ -10,8 +10,8 @@ export class GameComponent implements AfterViewInit {
 
   @ViewChild("board") boardElement!: ElementRef<HTMLInputElement>;
 
-  public black_pieces: any;
-  public red_pieces: any; 
+  // public black_pieces: any;
+  // public red_pieces: any; 
   private board: HTMLCollection | any;
   private game: Game | any;
 
@@ -40,14 +40,17 @@ class Game {
     "w": "white-square",
     "b": "blue-square",
     "RP": "red-piece",
-    "BP": "black-piece"
+    "BP": "black-piece",
+    "RQ": "red-queen",
+    "BQ": "black-queen",
+
   }))
 
   constructor(elements: HTMLCollection) {
       Game.elementBoard = elements;
 
       Game.board = [
-        ['w', 'b RP', 'w', 'b', 'w', 'b BP', 'w', 'b BP'],
+        ['w', 'b RQ', 'w', 'b', 'w', 'b BP', 'w', 'b BQ'],
         ['b RP', 'w', 'b RP', 'w', 'b', 'w', 'b BP', 'w'],
         ['w', 'b RP', 'w', 'b', 'w', 'b BP', 'w', 'b BP'],
         ['b RP', 'w', 'b RP', 'w', 'b', 'w', 'b BP', 'w'],

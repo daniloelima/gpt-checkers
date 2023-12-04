@@ -26,6 +26,22 @@
     background-repeat: no-repeat;
 }
 
+.black-queen {
+    background-image: url('../../../assets/black-checker/king-me.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: rotate(0.25turn);
+}
+
+.red-queen {
+    background-image: url('../../../assets/red-checker/king-me.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: rotate(0.25turn);
+}
+
 .background {
     background-color: #6F8A9D;
     width: 100%;
@@ -102,5 +118,13 @@ main {
         transform: rotate(0turn);
         width: min(65%, 700px);
         height: 85%;
+    }
+
+    .red-queen {
+        transform: rotate(0turn);
+    }
+
+    .black-queen {
+        transform: rotate(0turn);
     }
 }
