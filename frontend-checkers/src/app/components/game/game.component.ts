@@ -39,13 +39,14 @@ class Game {
   static active = '';
   static previousId = ''
   static redTurn = true;
-  static canMove = false;
-  static canTake = false;
-  static tryingToTake = false
+  static doubleJump = false;
+  static tryingToTake = false;
   static expected: string
   static board: string[][];
   static e : Element | any;
-  static movements: number[][]
+  static movements: number[][];
+  static possibleTake: number[][];
+  static validMovements: number[][];
   static iaTurnElement: HTMLElement;
   static elementBoard: HTMLInputElement;
   static playerTurnElement: HTMLElement;
@@ -61,6 +62,7 @@ class Game {
   constructor(elements: HTMLInputElement, playerTurnElement: HTMLElement, iaTurnElement: HTMLElement) {
       Game.elementBoard = elements;
       Game.movements = new Array;
+      Game.possibleTake = new Array;
 
       Game.iaTurnElement = iaTurnElement;
       Game.playerTurnElement = playerTurnElement;
@@ -178,11 +180,11 @@ const validClick = function() {
   }
 
   Game.previousId = Game.e.id;
-  // TODO: logica do jogo
   possibleMoves();
 }
 
 const checkMoveRight = function(x: number, y: number, up: boolean, down: boolean): boolean {
+  console.log("CALL");
   if ((y+1) > 7) {
     return false;
   }
@@ -191,15 +193,31 @@ const checkMoveRight = function(x: number, y: number, up: boolean, down: boolean
 
   if ((x-1) >= 0 && (x-1) < 8 && up) {
     if (!checkIfPieceExistsOnPosition(x-1, y+1, up, false)) {
-      Game.movements.push([x-1, y+1])
-      console.log(Game.movements);
+      if (Game.tryingToTake) {
+        Game.possibleTake.push([x-1, y+1]);
+        Game.tryingToTake = false;
+        Game.doubleJump = true;
+        // Recursivamente checa se pode comer outra peça
+        checkMoveRight(x-1, y+1, true, true);
+        Game.doubleJump = false;
+      } else {
+        Game.movements.push([x-1, y+1])
+      }
       possible = true;
     }
   }
   if ((x+1) >= 0 && (x+1) < 8 && down) {
     if (!checkIfPieceExistsOnPosition(x+1, y+1, false, down)) {
-      Game.movements.push([x+1, y+1])
-      console.log(Game.movements);
+      if (Game.tryingToTake) {
+        Game.possibleTake.push([x+1, y+1]);
+        Game.tryingToTake = false;
+        Game.doubleJump = true;
+        // Recursivamente checa se pode comer outra peça
+        checkMoveRight(x+1, y+1, true, true);
+        Game.doubleJump = false;
+      } else {
+        Game.movements.push([x+1, y+1])
+      }
       possible = true;
     }    
   }
@@ -212,6 +230,8 @@ const checkMoveRight = function(x: number, y: number, up: boolean, down: boolean
 }
 
 const checkMoveLeft = function(x: number, y: number, up: boolean, down: boolean): boolean {
+  console.log("CALL");
+  
   if ((y-1) < 0) {
     return false;
   }
@@ -220,19 +240,37 @@ const checkMoveLeft = function(x: number, y: number, up: boolean, down: boolean)
 
   if ((x-1) >= 0 && (x-1) < 8 && up) {
     if (!checkIfPieceExistsOnPosition(x-1, y-1, up, false)) {
-      Game.movements.push([x-1, y-1])
+      if (Game.tryingToTake) {
+        Game.possibleTake.push([x-1, y-1]);
+        Game.tryingToTake = false;
+        Game.doubleJump = true;
+        // Recursivamente checa se pode comer outra peça
+        checkMoveLeft(x-1, y-1, true, true);
+        Game.doubleJump = false;
+      } else {
+        Game.movements.push([x-1, y-1])
+      }
       possible = true
     }
   }
   if ((x+1) >= 0 && (x+1) < 8 && down) {
     if (!checkIfPieceExistsOnPosition(x+1, y-1, false, down)) {
-      Game.movements.push([x+1, y-1])
+      if (Game.tryingToTake) {
+        Game.possibleTake.push([x+1, y-1]);
+        Game.tryingToTake = false;
+        Game.doubleJump = true;
+        // Recursivamente checa se pode comer outra peça
+        checkMoveLeft(x+1, y-1, true, true);
+        Game.doubleJump = false;
+      } else {
+        Game.movements.push([x+1, y-1])
+      }
       possible = true;
     }
   }
 
   if (possible){
-    Game.canMove = true;
+    Game.tryingToTake = false;
     return true;
   }
 
@@ -240,35 +278,19 @@ const checkMoveLeft = function(x: number, y: number, up: boolean, down: boolean)
 }
 
 const checkIfCanTake = function(x: number, y: number, up: boolean, down: boolean): boolean {
+  console.log("CALL");
   let taking = false;
   Game.tryingToTake = true;
   if (Game.redTurn) {
     taking = checkMoveRight(x, y, up, down);
+    // up true down false
   } else {
     taking = checkMoveLeft(x, y, up, down);
   }
-  console.log(Game.movements);
-  console.log(Game.movements[0]);  
-  console.log(`up: ${up}, down: ${down}, taking: ${taking}, CanTake: ${Game.canTake}, CanMove: ${Game.canMove}, TryingToTake: ${Game.tryingToTake}`);
 
-  if (taking && down && !Game.canTake && !Game.canMove) {
-    Game.canTake = true;
-    Game.canMove = true;
-    Game.tryingToTake = false;
-    return true;
-  }
+  console.log(`up: ${up}, down: ${down}, taking: ${taking}, TryingToTake: ${Game.tryingToTake}`);
 
-  if (taking && down && !Game.canTake && Game.canMove) {
-    Game.canTake = true;
-    Game.canMove = true;
-    Game.tryingToTake = false;
-    Game.movements.splice(Game.movements.length - 2, 1);
-    return true;
-  }
-
-  if (taking && up) {
-    Game.canTake = true;
-    Game.canMove = true;
+  if (taking) {
     Game.tryingToTake = false;
     return true;
   }
@@ -277,10 +299,17 @@ const checkIfCanTake = function(x: number, y: number, up: boolean, down: boolean
 }
 
 const checkIfPieceExistsOnPosition = function(x: number, y: number, up: boolean, down: boolean): boolean {
+  console.log("CALL");
   console.log(Game.board[x][y].split(" ").filter(element => element != ''));
   
   const element = Game.board[x][y].split(" ").filter(element => element != '')[1]
-  console.log(`X: ${x}, Y: ${y}, up: ${up}, down: ${down}, expected: ${Game.expected}, element: ${element}, canMove: ${Game.canMove}, canTake: ${Game.canTake}, tryingToTake: ${Game.tryingToTake}`);
+  console.log(`X: ${x}, Y: ${y}, up: ${up}, down: ${down}, expected: ${Game.expected}, element: ${element}, tryingToTake: ${Game.tryingToTake}, doubleJump: ${Game.doubleJump}`);
+
+  // Espaço vazio, pode se mover
+  if (element === undefined && !Game.doubleJump) {
+    return false;
+  }
+
   // Se tiver uma peça da sua cor, não pode mover lá
   if (Game.expected === element) {
    return true;
@@ -289,25 +318,16 @@ const checkIfPieceExistsOnPosition = function(x: number, y: number, up: boolean,
   
   // Se tiver uma peça do adversário não pode mover lá mas checa se consegue atravesar
   if (element === otherPiece) {
-    let taking = false;
-    checkIfCanTake(x, y, up, down);
-    if (taking) {
-      Game.canTake = true;
-      return false;
+    if (Game.tryingToTake) {
+      return true;
     }
+    checkIfCanTake(x, y, up, down);
     return true;
   }
   
-  // Se não estiver tentando comer uma peça pode se mover normalmente.
+  // Se chegou aqui tentando comer uma peça pode se mover.
   if (Game.tryingToTake) {
-    Game.tryingToTake = false;
-    Game.canMove = true;
-    return false;
-  }
-
-  // Se nenhuma das opções puder comer pode se mover normalmente.
-  if (!Game.canTake) {
-    Game.canMove = true;
+    // Game.tryingToTake = false;
     return false;
   }
 
@@ -324,8 +344,6 @@ const getXYFromId = function(): number[] {
 
 // Seleciona os movimentos válidos que o jogador pode fazer
 const possibleMoves = function() {
-  Game.canTake = false;
-  Game.canMove = false;
   Game.tryingToTake = false;
   const values = getXYFromId();
   const x = values[0];
@@ -336,11 +354,20 @@ const possibleMoves = function() {
   } else {
     checkMoveLeft(x, y, true, true);
   }
-  console.log(`Final jogadas possiveis: ${Game.movements}`);
-  if (Game.movements.length == 0) {
-    return
+  console.log(`Final movimentos possiveis: ${Game.movements}`);
+  console.log(`Final ataques possiveis: ${Game.possibleTake}`);
+
+  if (Game.movements.length == 0 && Game.possibleTake.length == 0) {
+    console.log(Game.board);
+    return;
   }
-  
+
+  if (Game.possibleTake.length > 0) {
+    Game.validMovements = Game.possibleTake;
+  } else {
+    Game.validMovements = Game.movements;
+  }
+
   // Da highlight nas possiveis jogadas
   activateSquare();
 
@@ -359,7 +386,7 @@ const possibleMoves = function() {
 const activateSquare = function() {
   Game.active = Game.e.id;
   Game.e.className = Game.e.classList.value + " highlight";
-  Game.movements.forEach(move => {
+  Game.validMovements.forEach(move => {
     const classes = Game.getClasses(move[0], move[1]);
     const index = (move[0] * 8) + move[1];
     Game.elementBoard.children[index].className = classes + " highlight";
@@ -382,19 +409,21 @@ const validMoves = function(e: Element) {
   Game.e.addEventListener("click", selectAnotherPiece);
 
   // Jogadas para se mover
-  Game.movements.forEach(move => {
+  Game.validMovements.forEach(move => {
     const index = (move[0] * 8) + move[1];
     Game.elementBoard.children[index].addEventListener("click", addMovementListener);
   })
 }
 
 const clearPossibleMovements = function() {
-  Game.movements.forEach(move => {
+  Game.validMovements.forEach(move => {
     const index = (move[0] * 8) + move[1];
     const unusedMove = Game.elementBoard.children[index];
     Game.elementBoard.children[index].className = removeHighlight(unusedMove);
   })
   Game.movements = [];
+  Game.possibleTake = [];
+  Game.validMovements = [];
 }
 
 const clearEventListeners = function() {
@@ -420,15 +449,32 @@ const resetBoard = function() {
   
 }
 
+const removePieceTaken = function(originalPosition: number[]) {
+  const finalPosition = getXYFromId();
+  const x = (originalPosition[0] + finalPosition[0])/2;
+  const y = (originalPosition[1] + finalPosition[1])/2;
+
+  if (!Number.isInteger(x) || !Number.isInteger(y)) {
+    return
+  }
+  
+  Game.elementBoard.children[x*8 + y].className = "blue-square";
+  Game.board[x][y] = 'b';
+}
+
 // Processamento referente a movimentação da peça
 function addMovementListener(clickEvent: Event) {
   // Limpa o campo de onde a peça saiu
   clearSquare(Game.e);
+  const originalPosition = getXYFromId();
 
   // Move a peça
   Game.e = clickEvent.target as HTMLElement;
-  Game.e.className = Game.e.classList + Game.dict.get(Game.expected);
+  Game.e.className = Game.e.classList + " " + Game.dict.get(Game.expected);
   console.log(Game.e.classList);
+  
+  // Remove a peça que foi comida
+  removePieceTaken(originalPosition);
   
   // Adiciona o movimento à representação do tabuleiro
   addMoveToBoard();
