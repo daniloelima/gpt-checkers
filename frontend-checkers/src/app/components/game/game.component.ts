@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnChanges, OnInit, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-game',
@@ -15,10 +15,14 @@ export class GameComponent implements AfterViewInit {
   private board: HTMLCollection | any;
   private iaTurn: HTMLCollection | any;
   private playerTurn: HTMLCollection | any;
+  public redPieces: number = 0;
+  public blackPieces: number = 0;
 
-  constructor(private renderer: Renderer2) {
+  constructor() { 
+    this.redPieces = Game.redPieces;
+    this.blackPieces = Game.blackPieces;
+   }
 
-  }
   ngAfterViewInit(): void {
     this.board = this.boardElement.nativeElement;
     this.playerTurn = this.playerTurnElement.nativeElement;
@@ -38,10 +42,13 @@ export class GameComponent implements AfterViewInit {
 class Game {
   static active = '';
   static previousId = ''
+  static redPieces = 12;
+  static blackPieces = 12;
   static redTurn = true;
   static doubleJump = false;
   static tryingToTake = false;
-  static expected: string
+  static expectedColor: string
+  static expectedType: string
   static board: string[][];
   static e : Element | any;
   static movements: number[][];
@@ -112,12 +119,27 @@ class Game {
 }
 
 const clearSquare = function(element: Element) {
+  console.log(`LIMPANDO COR: ${Game.expectedColor}, PEÇA: ${Game.expectedType}`);
+  
   Game.e.className = removeHighlight(element);
-  if(Game.expected === 'RP') {
-    Game.e.className = removeRedPiece(element);
+
+  const values = getXYFromId();
+  const x = values[0];
+  const y = values[1];
+
+  if(Game.expectedColor === 'red') {
+    if (Game.expectedType === 'piece') {
+      Game.e.className = removeRedPiece(element, x, y);
+    } else {
+      Game.e.className = removeRedQueen(element, x, y);
+    }
   } 
-  if(Game.expected === 'BP') {
-    Game.e.className = removeBlackPiece(element);
+  if(Game.expectedColor === 'black') {
+    if (Game.expectedType === 'piece') {
+      Game.e.className = removeBlackPiece(element, x, y);
+    } else {
+      Game.e.className = removeBlackQueen(element, x, y);
+    }
   }
 }
 
@@ -125,39 +147,45 @@ const removeHighlight = function(element: Element): string {
   return element.classList.value.replace("highlight", "");
 }
 
-const removeRedPiece = function(element: Element): string {
-  const values = getXYFromId();
-  const x = values[0];
-  const y = values[1];
+const removeRedPiece = function(element: Element, x: number, y: number): string {
   Game.board[x][y] = Game.board[x][y].replace("RP", "");
   return element.classList.value.replace("red-piece", "");
 }
 
-const removeBlackPiece = function(element: Element): string {
-  const values = getXYFromId();
-  const x = values[0];
-  const y = values[1];
+const removeBlackPiece = function(element: Element, x: number, y: number): string {
   Game.board[x][y] = Game.board[x][y].replace("BP", "");
   return element.classList.value.replace("black-piece", "");
+}
+
+const removeRedQueen = function(element: Element, x: number, y: number): string {
+  Game.board[x][y] = Game.board[x][y].replace("RQ", "");
+  return element.classList.value.replace("red-queen", "");
+}
+
+const removeBlackQueen = function(element: Element, x: number, y: number): string {
+  Game.board[x][y] = Game.board[x][y].replace("BQ", "");
+  return element.classList.value.replace("black-queen", "");
 }
 
 const addMoveToBoard = function() {
   const values = getXYFromId();
   const x = values[0];
   const y = values[1];
-  console.log(`toAdd ${Game.expected}`);
+  console.log(`toAdd ${Game.expectedColor}`);
   console.log(`position before: ${Game.board[x][y]}`);
-  Game.board[x][y] += " " + Game.expected;
+  let moveToAdd = ''
+  moveToAdd += `${Game.expectedColor === 'red' ? 'R' : 'B'}${Game.expectedType === 'piece' ? 'P' : 'Q'}`
+  Game.board[x][y] += " " + moveToAdd;
   console.log(`position after: ${Game.board[x][y]}`);
 }
 
 // Seleciona quem vai jogar
 const toMove = function() {
   if (Game.redTurn) {
-    Game.expected = "RP"; 
+    Game.expectedColor = "red"; 
     validClick();
   } else {
-    Game.expected = "BP"; 
+    Game.expectedColor = "black"; 
     validClick();
   }
 }
@@ -173,18 +201,24 @@ const changeTurn = function() {
 const validClick = function() {
   const piece = Game.e.classList.value.split(" ").filter((element:string) => element != '')[1];
   console.log(`Piece: '${piece}', ID: ${Game.e.id}, PreviousID: '${Game.previousId}'`);
-
-  if (!piece || piece !== Game.dict.get(Game.expected)) {
+  
+  if (!piece) {
+    console.log("Clique em uma peça sua");
+    return;
+  }
+  
+  const color = piece.split("-")[0];
+  Game.expectedType = piece.split("-")[1];
+  if (!piece || color !== Game.expectedColor) {
     console.log("Clique em uma peça sua");
     return;
   }
 
   Game.previousId = Game.e.id;
-  possibleMoves();
+  possibleMoves(color);
 }
 
 const checkMoveRight = function(x: number, y: number, up: boolean, down: boolean): boolean {
-  console.log("CALL");
   if ((y+1) > 7) {
     return false;
   }
@@ -192,14 +226,15 @@ const checkMoveRight = function(x: number, y: number, up: boolean, down: boolean
   let possible = false;
 
   if ((x-1) >= 0 && (x-1) < 8 && up) {
-    if (!checkIfPieceExistsOnPosition(x-1, y+1, up, false)) {
+    if (!checkIfPieceExistsOnPosition(x-1, y+1, up, false, false, true)) {
       if (Game.tryingToTake) {
         Game.possibleTake.push([x-1, y+1]);
         Game.tryingToTake = false;
-        Game.doubleJump = true;
         // Recursivamente checa se pode comer outra peça
-        checkMoveRight(x-1, y+1, true, true);
-        Game.doubleJump = false;
+        // Game.doubleJump = true;
+        // TODO: Comer duas peças ou mais
+        // checkMoveRight(x-1, y+1, true, true);
+        // Game.doubleJump = false;
       } else {
         Game.movements.push([x-1, y+1])
       }
@@ -207,14 +242,15 @@ const checkMoveRight = function(x: number, y: number, up: boolean, down: boolean
     }
   }
   if ((x+1) >= 0 && (x+1) < 8 && down) {
-    if (!checkIfPieceExistsOnPosition(x+1, y+1, false, down)) {
+    if (!checkIfPieceExistsOnPosition(x+1, y+1, false, down, false, true)) {
       if (Game.tryingToTake) {
         Game.possibleTake.push([x+1, y+1]);
         Game.tryingToTake = false;
-        Game.doubleJump = true;
         // Recursivamente checa se pode comer outra peça
-        checkMoveRight(x+1, y+1, true, true);
-        Game.doubleJump = false;
+        // Game.doubleJump = true;
+        // TODO: Comer duas peças ou mais
+        // checkMoveRight(x+1, y+1, true, true);
+        // Game.doubleJump = false;
       } else {
         Game.movements.push([x+1, y+1])
       }
@@ -230,8 +266,6 @@ const checkMoveRight = function(x: number, y: number, up: boolean, down: boolean
 }
 
 const checkMoveLeft = function(x: number, y: number, up: boolean, down: boolean): boolean {
-  console.log("CALL");
-  
   if ((y-1) < 0) {
     return false;
   }
@@ -239,14 +273,15 @@ const checkMoveLeft = function(x: number, y: number, up: boolean, down: boolean)
   let possible = false;
 
   if ((x-1) >= 0 && (x-1) < 8 && up) {
-    if (!checkIfPieceExistsOnPosition(x-1, y-1, up, false)) {
+    if (!checkIfPieceExistsOnPosition(x-1, y-1, up, false, true, false)) {
       if (Game.tryingToTake) {
         Game.possibleTake.push([x-1, y-1]);
         Game.tryingToTake = false;
-        Game.doubleJump = true;
         // Recursivamente checa se pode comer outra peça
-        checkMoveLeft(x-1, y-1, true, true);
-        Game.doubleJump = false;
+        // Game.doubleJump = true;
+        // TODO: Comer duas peças ou mais
+        // checkMoveLeft(x-1, y-1, true, true);
+        // Game.doubleJump = false;
       } else {
         Game.movements.push([x-1, y-1])
       }
@@ -254,14 +289,15 @@ const checkMoveLeft = function(x: number, y: number, up: boolean, down: boolean)
     }
   }
   if ((x+1) >= 0 && (x+1) < 8 && down) {
-    if (!checkIfPieceExistsOnPosition(x+1, y-1, false, down)) {
+    if (!checkIfPieceExistsOnPosition(x+1, y-1, false, down, true, false)) {
       if (Game.tryingToTake) {
         Game.possibleTake.push([x+1, y-1]);
         Game.tryingToTake = false;
-        Game.doubleJump = true;
         // Recursivamente checa se pode comer outra peça
-        checkMoveLeft(x+1, y-1, true, true);
-        Game.doubleJump = false;
+        // Game.doubleJump = true;
+        // TODO: Comer duas peças ou mais
+        // checkMoveLeft(x+1, y-1, true, true);
+        // Game.doubleJump = false;
       } else {
         Game.movements.push([x+1, y-1])
       }
@@ -277,20 +313,30 @@ const checkMoveLeft = function(x: number, y: number, up: boolean, down: boolean)
   return false;
 }
 
-const checkIfCanTake = function(x: number, y: number, up: boolean, down: boolean): boolean {
-  console.log("CALL");
+const checkIfCanTake = function(x: number, y: number, up: boolean, down: boolean, left: boolean, right: boolean): boolean {
   let taking = false;
+  let takingBack = false;
   Game.tryingToTake = true;
+  console.log(`CHECANDO: RED: ${Game.redTurn} UP: ${up}, DOWN: ${down}, LEFT: ${left}, RIGHT: ${right}`);
+  
   if (Game.redTurn) {
-    taking = checkMoveRight(x, y, up, down);
-    // up true down false
+    if (left) {
+      // Comendo voltando
+      takingBack = checkMoveLeft(x, y, up, down);
+    } else {
+      taking = checkMoveRight(x, y, up, down);
+    }
   } else {
-    taking = checkMoveLeft(x, y, up, down);
+    if (right) {
+      takingBack = checkMoveRight(x, y, up, down);
+    } else {
+      taking = checkMoveLeft(x, y, up, down);
+    }
   }
 
   console.log(`up: ${up}, down: ${down}, taking: ${taking}, TryingToTake: ${Game.tryingToTake}`);
 
-  if (taking) {
+  if (taking || takingBack) {
     Game.tryingToTake = false;
     return true;
   }
@@ -298,30 +344,34 @@ const checkIfCanTake = function(x: number, y: number, up: boolean, down: boolean
   return false;
 }
 
-const checkIfPieceExistsOnPosition = function(x: number, y: number, up: boolean, down: boolean): boolean {
-  console.log("CALL");
+const checkIfPieceExistsOnPosition = function(x: number, y: number, up: boolean, down: boolean, left: boolean, right: boolean): boolean {
   console.log(Game.board[x][y].split(" ").filter(element => element != ''));
   
   const element = Game.board[x][y].split(" ").filter(element => element != '')[1]
-  console.log(`X: ${x}, Y: ${y}, up: ${up}, down: ${down}, expected: ${Game.expected}, element: ${element}, tryingToTake: ${Game.tryingToTake}, doubleJump: ${Game.doubleJump}`);
+  console.log(`X: ${x}, Y: ${y}, up: ${up}, down: ${down}, expected: ${Game.expectedColor}, element: ${element}, tryingToTake: ${Game.tryingToTake}, doubleJump: ${Game.doubleJump}`);
 
   // Espaço vazio, pode se mover
   if (element === undefined && !Game.doubleJump) {
     return false;
   }
 
+  const color = Game.dict.get(element)!.split("-")[0];
+  const type = Game.dict.get(element)!.split("-")[1];
+  console.log(`COLOR: ${color}, type: ${type}, ExpectedType: ${Game.expectedType}`);
+  
+
   // Se tiver uma peça da sua cor, não pode mover lá
-  if (Game.expected === element) {
+  if (Game.expectedColor === color) {
    return true;
   }
-  const otherPiece = Game.expected === "RP" ? "BP" : "RP";
+  const otherPiece = Game.expectedColor === "red" ? "black" : "red";
   
   // Se tiver uma peça do adversário não pode mover lá mas checa se consegue atravesar
-  if (element === otherPiece) {
-    if (Game.tryingToTake) {
+  if (color === otherPiece) {
+    if (Game.tryingToTake && Game.expectedType !== 'queen') {
       return true;
     }
-    checkIfCanTake(x, y, up, down);
+    checkIfCanTake(x, y, up, down, left, right);
     return true;
   }
   
@@ -343,16 +393,22 @@ const getXYFromId = function(): number[] {
 }
 
 // Seleciona os movimentos válidos que o jogador pode fazer
-const possibleMoves = function() {
+const possibleMoves = function(color: string) {
   Game.tryingToTake = false;
   const values = getXYFromId();
   const x = values[0];
   const y = values[1];
 
-  if (Game.dict.get(Game.expected) === 'red-piece') {
+  if (color === 'red') {
     checkMoveRight(x, y, true, true);
+    if (Game.expectedType === 'queen') {
+      checkMoveLeft(x, y, true, true);
+    }
   } else {
     checkMoveLeft(x, y, true, true);
+    if (Game.expectedType === 'queen') {
+      checkMoveRight(x, y, true, true);
+    }
   }
   console.log(`Final movimentos possiveis: ${Game.movements}`);
   console.log(`Final ataques possiveis: ${Game.possibleTake}`);
@@ -453,11 +509,23 @@ const removePieceTaken = function(originalPosition: number[]) {
   const finalPosition = getXYFromId();
   const x = (originalPosition[0] + finalPosition[0])/2;
   const y = (originalPosition[1] + finalPosition[1])/2;
-
+  
   if (!Number.isInteger(x) || !Number.isInteger(y)) {
     return
   }
+
+  if (Game.expectedColor == 'red') {
+    Game.blackPieces -= 1;
+    Game.iaTurnElement.children[1].innerHTML = `Peças ${Game.blackPieces}`;
+  } else {
+    Game.redPieces -= 1;
+    Game.playerTurnElement.children[1].innerHTML = `Peças ${Game.redPieces}`;
+  }
   
+  console.log(`RED: ${Game.redPieces}, BLACK: ${Game.blackPieces}`);
+  
+  // TODO: Criar algum alert quando o jogo terminar
+
   Game.elementBoard.children[x*8 + y].className = "blue-square";
   Game.board[x][y] = 'b';
 }
@@ -470,7 +538,7 @@ function addMovementListener(clickEvent: Event) {
 
   // Move a peça
   Game.e = clickEvent.target as HTMLElement;
-  Game.e.className = Game.e.classList + " " + Game.dict.get(Game.expected);
+  Game.e.className = Game.e.classList + " " + `${Game.expectedColor}-${Game.expectedType}`;
   console.log(Game.e.classList);
   
   // Remove a peça que foi comida
