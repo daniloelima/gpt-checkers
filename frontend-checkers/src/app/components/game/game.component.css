@@ -108,6 +108,31 @@ main {
     transform: rotate(-0.25turn);
 }
 
+#gameOver {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* opacity: 0.5; */
+    background-color: transparent;
+}
+
+#gameOver > div {
+    width: 20%;
+    height: 20%;
+    border-radius: 10px;
+    border: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #a3b5c3;
+}
+
 @media (min-width: 600px) {
     .divider {
         flex-direction: row;

@@ -86,3 +86,10 @@
         </div>
     </div>
 </div>
+
+<div *ngIf="gameOver" id="gameOver">
+    <div>
+        <h1>Fim de jogo</h1>
+        <button mat-raised-button color="primary" routerLink="/home">Ir para o menu</button>
+    </div>
+</div>

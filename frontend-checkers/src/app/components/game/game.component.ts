@@ -17,6 +17,7 @@ export class GameComponent implements AfterViewInit {
   private playerTurn: HTMLCollection | any;
   public redPieces: number = 0;
   public blackPieces: number = 0;
+  public gameOver = false;
 
   constructor() { 
     this.redPieces = Game.redPieces;
@@ -33,8 +34,12 @@ export class GameComponent implements AfterViewInit {
 
   defineListeners() {
     this.boardElement.nativeElement.childNodes.forEach(element => {
-      element.addEventListener('click', Game.movePiece)
+      element.addEventListener('click', Game.selectPiece)
     });
+
+    this.boardElement.nativeElement.addEventListener('GameOver', () => {
+      this.gameOver = true;
+    })
   }
 
 }
@@ -111,7 +116,7 @@ class Game {
     }
 
     // Função principal, faz o gerenciamento da movimentação da peça
-    static movePiece(event: Event) {
+    static selectPiece(event: Event) {
       Game.e = event.target as Element;
       toMove();
     }
@@ -119,8 +124,6 @@ class Game {
 }
 
 const clearSquare = function(element: Element) {
-  console.log(`LIMPANDO COR: ${Game.expectedColor}, PEÇA: ${Game.expectedType}`);
-  
   Game.e.className = removeHighlight(element);
 
   const values = getXYFromId();
@@ -171,12 +174,10 @@ const addMoveToBoard = function() {
   const values = getXYFromId();
   const x = values[0];
   const y = values[1];
-  console.log(`toAdd ${Game.expectedColor}`);
-  console.log(`position before: ${Game.board[x][y]}`);
+
   let moveToAdd = ''
   moveToAdd += `${Game.expectedColor === 'red' ? 'R' : 'B'}${Game.expectedType === 'piece' ? 'P' : 'Q'}`
   Game.board[x][y] += " " + moveToAdd;
-  console.log(`position after: ${Game.board[x][y]}`);
 }
 
 // Seleciona quem vai jogar
@@ -200,7 +201,6 @@ const changeTurn = function() {
 // Define se o clique é valido (em uma peça da vez do jogador)
 const validClick = function() {
   const piece = Game.e.classList.value.split(" ").filter((element:string) => element != '')[1];
-  console.log(`Piece: '${piece}', ID: ${Game.e.id}, PreviousID: '${Game.previousId}'`);
   
   if (!piece) {
     console.log("Clique em uma peça sua");
@@ -317,7 +317,6 @@ const checkIfCanTake = function(x: number, y: number, up: boolean, down: boolean
   let taking = false;
   let takingBack = false;
   Game.tryingToTake = true;
-  console.log(`CHECANDO: RED: ${Game.redTurn} UP: ${up}, DOWN: ${down}, LEFT: ${left}, RIGHT: ${right}`);
   
   if (Game.redTurn) {
     if (left) {
@@ -334,21 +333,16 @@ const checkIfCanTake = function(x: number, y: number, up: boolean, down: boolean
     }
   }
 
-  console.log(`up: ${up}, down: ${down}, taking: ${taking}, TryingToTake: ${Game.tryingToTake}`);
-
+  Game.tryingToTake = false;
   if (taking || takingBack) {
-    Game.tryingToTake = false;
     return true;
   }
 
   return false;
 }
 
-const checkIfPieceExistsOnPosition = function(x: number, y: number, up: boolean, down: boolean, left: boolean, right: boolean): boolean {
-  console.log(Game.board[x][y].split(" ").filter(element => element != ''));
-  
+const checkIfPieceExistsOnPosition = function(x: number, y: number, up: boolean, down: boolean, left: boolean, right: boolean): boolean {  
   const element = Game.board[x][y].split(" ").filter(element => element != '')[1]
-  console.log(`X: ${x}, Y: ${y}, up: ${up}, down: ${down}, expected: ${Game.expectedColor}, element: ${element}, tryingToTake: ${Game.tryingToTake}, doubleJump: ${Game.doubleJump}`);
 
   // Espaço vazio, pode se mover
   if (element === undefined && !Game.doubleJump) {
@@ -357,9 +351,7 @@ const checkIfPieceExistsOnPosition = function(x: number, y: number, up: boolean,
 
   const color = Game.dict.get(element)!.split("-")[0];
   const type = Game.dict.get(element)!.split("-")[1];
-  console.log(`COLOR: ${color}, type: ${type}, ExpectedType: ${Game.expectedType}`);
   
-
   // Se tiver uma peça da sua cor, não pode mover lá
   if (Game.expectedColor === color) {
    return true;
@@ -410,11 +402,9 @@ const possibleMoves = function(color: string) {
       checkMoveRight(x, y, true, true);
     }
   }
-  console.log(`Final movimentos possiveis: ${Game.movements}`);
-  console.log(`Final ataques possiveis: ${Game.possibleTake}`);
 
+  // Sem jogadas possiveis
   if (Game.movements.length == 0 && Game.possibleTake.length == 0) {
-    console.log(Game.board);
     return;
   }
 
@@ -435,7 +425,6 @@ const possibleMoves = function(color: string) {
 
   // Cria eventos para escutar a movimentação da peça
   validMoves(Game.e);
-  
 }
 
 // Da highlight nas posiveis jogadas
@@ -491,7 +480,7 @@ const clearEventListeners = function() {
 const addBoardEventListener = function() {
   // Adiciona listeners para a proxima jogada
   Game.elementBoard.childNodes.forEach(node => {
-    node.addEventListener("click", Game.movePiece);
+    node.addEventListener("click", Game.selectPiece);
   })
 }
 
@@ -501,8 +490,6 @@ const resetBoard = function() {
 
   // Limpa as possiveis jogadas
   clearPossibleMovements();
-
-  
 }
 
 const removePieceTaken = function(originalPosition: number[]) {
@@ -522,12 +509,18 @@ const removePieceTaken = function(originalPosition: number[]) {
     Game.playerTurnElement.children[1].innerHTML = `Peças ${Game.redPieces}`;
   }
   
-  console.log(`RED: ${Game.redPieces}, BLACK: ${Game.blackPieces}`);
-  
-  // TODO: Criar algum alert quando o jogo terminar
-
   Game.elementBoard.children[x*8 + y].className = "blue-square";
   Game.board[x][y] = 'b';
+}
+
+const movePiece = function() {
+  const position = getXYFromId();
+  const x = position[0];
+  const y = position[1];
+  if (y == 0 || y == 7) {
+    Game.expectedType = 'queen'
+  }
+  Game.e.className = Game.e.classList + " " + `${Game.expectedColor}-${Game.expectedType}`;
 }
 
 // Processamento referente a movimentação da peça
@@ -538,18 +531,24 @@ function addMovementListener(clickEvent: Event) {
 
   // Move a peça
   Game.e = clickEvent.target as HTMLElement;
-  Game.e.className = Game.e.classList + " " + `${Game.expectedColor}-${Game.expectedType}`;
-  console.log(Game.e.classList);
+  movePiece();
   
   // Remove a peça que foi comida
   removePieceTaken(originalPosition);
   
   // Adiciona o movimento à representação do tabuleiro
   addMoveToBoard();
-  console.log(Game.board);
   
   // Reseta os listeners do board
   resetBoard();
+
+  if (Game.redPieces == 0 || Game.blackPieces == 0) {
+    const GameOver = new Event("GameOver");
+    Game.elementBoard.dispatchEvent(GameOver);
+    Game.redPieces = 12;
+    Game.blackPieces = 12;
+    return;
+  }
 
   // Muda a vez do jogador
   changeTurn();
