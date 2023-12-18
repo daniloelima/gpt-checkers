@@ -10,7 +10,7 @@ Fazer um jogo de damas usando GPT, com interface gráfica e disponibilização d
 
 O repositório foi dividido entre 2 pastas:
 
-- a pasta [docs](docs): Conténdo o [artigo](docs/trabalho-gpt-danilo-fernando) realizado pelos alunos e outros documentos e imagens.
+- a pasta [docs](docs): Conténdo o [artigo](docs/trabalho-gpt-danilo-fernando.pdf) realizado pelos alunos e outros documentos e imagens.
 - a pasta [front](src): Com o código desenvolvido.
 - a pasta [tools](tools): Com ferramentas auxiliares.
 
