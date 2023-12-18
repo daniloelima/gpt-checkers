@@ -36,10 +36,11 @@ A fim de executar o programa é necessário seguir os seguintes passos:
 	```
 	cd src/frontend-checkers
 	```	
-- Crie o servidor da aplicação
+- Inicialize o servidor da aplicação
 	```
 	ng serve -o
 	```
+- Para jogar acesse https://localhost:4200 e inicie a partida
 
 
 ## Jogo e Regras
