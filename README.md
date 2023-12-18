@@ -4,7 +4,7 @@ Repositório com o trabalho de disciplina de Generative Pre-Trained Transformers
 
 ## Proposta
 
-Fazer um jogo de damas usando GPT, com interface gráfica e disponibilização do estado atual do jogo a cada novo passo, para a ChatGPT ter boas chances de fazer bons movimentos. A aplicação web foi desenvolvida a partir do framework Angular e a conexão com a gpt foi feita a partir da API do chatGPT da openAI.  A programação jogo se encontra dentro de [game.component.ts][frontend-checkers/src/app/components/game/game.component.ts), em que as requisões da api também estão dentro desse código.
+Fazer um jogo de damas usando GPT, com interface gráfica e disponibilização do estado atual do jogo a cada novo passo, para a ChatGPT ter boas chances de fazer bons movimentos. A aplicação web foi desenvolvida a partir do framework Angular e a conexão com a gpt foi feita a partir da API do chatGPT da openAI.  A programação jogo se encontra dentro de [game.component.ts](frontend-checkers/src/app/components/game/game.component.ts), em que as requisões da api também estão dentro desse código.
 
 ## Divisão
 
