@@ -1,17 +1,17 @@
 # gpt-checkers
 
-Repositório com o trabalho de disciplina de Generative Pre-Trained Transformers do professor Alberto realizado pelos alunos Danilo Lima e Fernando Azevedo
+Repositório com o trabalho de disciplina de Generative Pre-Trained Transformers do professor Alberto realizado pelos alunos Danilo Erler Lima e Fernando Azevedo Peres
 
 ## Proposta
 
-
+Fazer um jogo de damas usando GPT, com interface gráfica e disponibilização do estado atual do jogo a cada novo passo, para a ChatGPT ter boas chances de fazer bons movimentos.
 
 ## Divisão
 
 O repositório foi dividido entre 2 pastas:
 
-- a pasta [docs](docs): Conténdo o artigo realizado pelos alunos e outros documentos.
-- a pasta [src](src): Com o código desenvolvido.
+- a pasta [docs](docs): Conténdo o [artigo](docs/trabalho-gpt-danilo-fernando) realizado pelos alunos e outros documentos e imagens.
+- a pasta [front](src): Com o código desenvolvido.
 - a pasta [tools](tools): Com ferramentas auxiliares.
 
 
