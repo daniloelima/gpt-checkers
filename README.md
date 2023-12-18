@@ -4,15 +4,17 @@ Repositório com o trabalho de disciplina de Generative Pre-Trained Transformers
 
 ## Proposta
 
-Fazer um jogo de damas usando GPT, com interface gráfica e disponibilização do estado atual do jogo a cada novo passo, para a ChatGPT ter boas chances de fazer bons movimentos. A aplicação web foi desenvolvida a partir do framework Angular e a conexão com a gpt foi feita a partir da API do chatGPT da openAI.  A programação jogo se encontra dentro de [game.component.ts](frontend-checkers/src/app/components/game/game.component.ts), em que as requisões da api também estão dentro desse código.
+Fazer um jogo de damas usando GPT, com interface gráfica e disponibilização do estado atual do jogo a cada novo passo, para a ChatGPT ter boas chances de fazer bons movimentos. A aplicação web foi desenvolvida a partir do framework Angular e a conexão com a gpt foi feita a partir da API do chatGPT da openAI.  
+
+A programação de funcionamento do jogo se encontra dentro de [game.component](frontend-checkers/src/app/components/game/game.component.ts), em que as requisões da api também estão dentro desse código.
 
 ## Divisão
 
 O repositório foi dividido entre:
 
 - a pasta de [documentos](docs): Conténdo o [artigo](docs/trabalho-gpt-danilo-fernando.pdf) realizado pelos alunos e outros documentos e imagens.
-- a pasta de [código](frontend-checkers): Com o código desenvolvido.
-- a pasta de [ferramentas](tools): Com ferramentas auxiliares.
+- a pasta de [código](frontend-checkers): Com o código da aplicação desenvolvida.
+- a pasta de [ferramentas](tools): Com ferramentas auxiliares como um script para instalação de dependencias.
 
 
 ## Build and Run
@@ -24,15 +26,14 @@ A fim de executar o programa é necessário seguir os seguintes passos:
 	git clone git@github.com:daniloelima/gpt-checkers.git	
 	```
 
-- Instale o Gerenciador de Pacotes NPM e o Ng-Common:
+- Rode o script disponivel na pasta tools para instalação das dependencias:
 	```
-	sudo apt install npm -y
-	sudo apt install ng-common -y
+	sudo bash install_dependences.sh
 	```
 
 - Entre na pasta com o código do programa e inicialize a aplicação:
 	```
-	cd src/frontend-checkers
+	cd frontend-checkers
  	ng serve -o
 	```	
 
