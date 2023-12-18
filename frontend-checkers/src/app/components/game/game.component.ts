@@ -87,16 +87,18 @@ class Game {
       BQ: 'black-queen',
     })
   );
+  static openAiService: OpenaiService;
 
   constructor(
     elements: HTMLInputElement,
     playerTurnElement: HTMLElement,
     iaTurnElement: HTMLElement,
-    private openAiService: OpenaiService
+    openAiService: OpenaiService
   ) {
     Game.elementBoard = elements;
     Game.movements = new Array();
     Game.possibleTake = new Array();
+    Game.openAiService = openAiService;
 
     Game.iaTurnElement = iaTurnElement;
     Game.playerTurnElement = playerTurnElement;
@@ -116,18 +118,6 @@ class Game {
     ];
 
     this.displayGame();
-    this.ApiTest();
-  }
-
-  ApiTest() {
-    this.openAiService.generateText("").subscribe({
-      next: (response: any) => {
-        console.log(response.choices[0]);
-      },
-      error: (error) => {
-        console.error('Erro ao chamar a API GPT-3:', error);
-      },
-    });
   }
 
   // Adiciona as classes aos elementos para aparecer o jogo
@@ -234,6 +224,82 @@ const addMoveToBoard = function () {
   Game.board[x][y] += ' ' + moveToAdd;
 };
 
+const generateStringFromBoard = function(): string {
+  let board = '';
+  let aux : string[];
+  console.log(Game.board);
+  
+  for (let i=-1; i<8; i++) {
+    if (i == -1) {
+      board += "x/y  ";
+    } else {
+      board += ` ${i} `;
+    }
+    for (let j=0; j<8; j++) {
+      if (i == -1) {
+        board += `${j}   `;
+      } else {
+        // console.log(Game.board[i][j].split(" "));
+        
+        aux = Game.board[i][j].split(" ").filter(letter => letter != 'w' && letter != 'b' && letter != '');
+
+        board += ` ${aux[0] == undefined || aux[0] == "" ? '__' : aux[0]} `; 
+      }
+    }
+    board += "\n";
+  }
+  return board;
+}
+
+const parseResposta = function(resposta: string): string {
+  return resposta.split('[')[1].split(']')[0];
+}
+
+const apiCall = function() {
+  const board = generateStringFromBoard();
+  let posicaoInicial: string = '';
+  Game.openAiService.selectPiece(board).subscribe({
+    next: (response: any) => {
+      console.log(response);
+      console.log(response.choices[0].message.content);
+      console.log(parseResposta(response.choices[0].message.content));
+      posicaoInicial = parseResposta(response.choices[0].message.content);
+      console.log(posicaoInicial);
+
+      let x = parseInt(posicaoInicial.split('-')[0]);
+      let y = parseInt(posicaoInicial.split('-')[1]);
+
+      if (Number.isNaN(y)) {
+        y = parseInt(posicaoInicial.split(',')[1]);
+      }
+
+      if (Number.isNaN(x) || Number.isNaN(y)) {
+        apiCall();
+        return;
+      }
+
+      console.log(`x: ${x}, y: ${y}`);
+
+      const index = x * 8 + y;
+
+      console.log(Game.elementBoard.children[index]);
+      
+      Game.e = Game.elementBoard.children[index];
+      if (!validClick()) {
+        apiCall();
+      }
+    },
+    error: (error) => {
+      console.error('Erro ao chamar a API GPT-3:', error);
+      // console.log("ESPERANDO 2 SEGUNDOS PARA MANDAR MAIS REQUISIÇÕES");
+      
+      // setTimeout(apiCall, 2000)
+      // TODO: descomentar isso depois
+      // apiCall();
+    },
+  });
+}
+
 // Seleciona quem vai jogar
 const toMove = function () {
   if (Game.redTurn) {
@@ -241,7 +307,7 @@ const toMove = function () {
     validClick();
   } else {
     Game.expectedColor = 'black';
-    validClick();
+    apiCall()
   }
 };
 
@@ -253,25 +319,25 @@ const changeTurn = function () {
 };
 
 // Define se o clique é valido (em uma peça da vez do jogador)
-const validClick = function () {
+const validClick = function (): boolean {
   const piece = Game.e.classList.value
     .split(' ')
     .filter((element: string) => element != '')[1];
 
   if (!piece) {
     console.log('Clique em uma peça sua');
-    return;
+    return false;
   }
 
   const color = piece.split('-')[0];
   Game.expectedType = piece.split('-')[1];
   if (!piece || color !== Game.expectedColor) {
     console.log('Clique em uma peça sua');
-    return;
+    return false;
   }
 
   Game.previousId = Game.e.id;
-  possibleMoves(color);
+  return possibleMoves(color);
 };
 
 const checkMoveRight = function (
@@ -487,7 +553,8 @@ const possibleMoves = function (color: string) {
 
   // Sem jogadas possiveis
   if (Game.movements.length == 0 && Game.possibleTake.length == 0) {
-    return;
+    console.log("Sem movimentos possiveis")
+    return false;
   }
 
   if (Game.possibleTake.length > 0) {
@@ -495,6 +562,8 @@ const possibleMoves = function (color: string) {
   } else {
     Game.validMovements = Game.movements;
   }
+  console.log(`Movimentos possiveis: ${Game.validMovements}`);
+  
 
   // Da highlight nas possiveis jogadas
   activateSquare();
@@ -506,7 +575,17 @@ const possibleMoves = function (color: string) {
   Game.e = Game.elementBoard.children[x * 8 + y];
 
   // Cria eventos para escutar a movimentação da peça
-  validMoves(Game.e);
+  if (Game.redTurn) {
+    validMoves(Game.e);
+  } else {
+    if (Game.validMovements.length == 1) {
+      IaMove(Game.validMovements[0])
+    } else {
+      // TODO: criar função para chamar a api dando os movimentos possiveis.
+      IaMove(Game.validMovements[0])
+    }
+  }
+  return true;
 };
 
 // Da highlight nas posiveis jogadas
@@ -609,6 +688,48 @@ const movePiece = function () {
     Game.e.classList + ' ' + `${Game.expectedColor}-${Game.expectedType}`;
 };
 
+function IaMove(jogada: number[]) {
+    // Limpa o campo de onde a peça saiu
+    clearSquare(Game.e);
+    const originalPosition = getXYFromId();
+  
+    // Move a peça
+    const x = jogada[0];
+    const y = jogada[1];
+    const index = x * 8 + y;
+    Game.e = Game.elementBoard.children[index];
+    movePiece();
+  
+    // Remove a peça que foi comida
+    removePieceTaken(originalPosition);
+  
+    // Adiciona o movimento à representação do tabuleiro
+    addMoveToBoard();
+    console.log(`Tabuleiro após jogada da IA:`)
+    console.log(Game.board);
+    
+  
+    // Reseta os listeners do board
+    resetBoard();
+  
+    if (Game.redPieces == 0 || Game.blackPieces == 0) {
+      const GameOver = new Event('GameOver');
+      Game.elementBoard.dispatchEvent(GameOver);
+      Game.redPieces = 12;
+      Game.blackPieces = 12;
+      return;
+    }
+  
+    // Muda a vez do jogador
+    changeTurn();
+  
+    if (!Game.redTurn) {
+      toMove();
+    } else {
+      addBoardEventListener();
+    }
+}
+
 // Processamento referente a movimentação da peça
 function addMovementListener(clickEvent: Event) {
   // Limpa o campo de onde a peça saiu
@@ -624,6 +745,8 @@ function addMovementListener(clickEvent: Event) {
 
   // Adiciona o movimento à representação do tabuleiro
   addMoveToBoard();
+  console.log(`Tabuleiro após jogada do jogador:`)
+  console.log(Game.board);
 
   // Reseta os listeners do board
   resetBoard();
@@ -639,5 +762,9 @@ function addMovementListener(clickEvent: Event) {
   // Muda a vez do jogador
   changeTurn();
 
-  addBoardEventListener();
+  if (!Game.redTurn) {
+    toMove();
+  } else {
+    addBoardEventListener();
+  }
 }
