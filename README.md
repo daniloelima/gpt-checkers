@@ -11,7 +11,7 @@ Fazer um jogo de damas usando GPT, com interface gráfica e disponibilização d
 O repositório foi dividido entre 2 pastas:
 
 - a pasta [docs](docs): Conténdo o [artigo](docs/trabalho-gpt-danilo-fernando.pdf) realizado pelos alunos e outros documentos e imagens.
-- a pasta [front](src): Com o código desenvolvido.
+- a pasta [front](src): Com o código desenvolvido. A aplicação web foi desenvolvida a partir do framework Angular. A maior parte da programação jogo se da dentro de [game.component.ts][frontend-checkers/src/app/components/game/game.component.ts), as requisões da api também estão dentro desse código.
 - a pasta [tools](tools): Com ferramentas auxiliares.
 
 
@@ -19,27 +19,23 @@ O repositório foi dividido entre 2 pastas:
 
 A fim de executar o programa é necessário seguir os seguintes passos:
 
-- Clone o [repositório](https://github.com/daniloelima/gpt-checkers). 
+- Clone o [repositório](https://github.com/daniloelima/gpt-checkers):
 	```
 	git clone git@github.com:daniloelima/gpt-checkers.git	
 	```
 
-- Instale o Gerenciador de Pacotes NPM e o Ng-Common
+- Instale o Gerenciador de Pacotes NPM e o Ng-Common:
 	```
 	sudo apt install npm -y
-	```
-	```
 	sudo apt install ng-common -y
 	```
 
-- Entre na pasta com o código do programa
+- Entre na pasta com o código do programa e inicialize a aplicação:
 	```
 	cd src/frontend-checkers
+ 	ng serve -o
 	```	
-- Inicialize o servidor da aplicação
-	```
-	ng serve -o
-	```
+
 - Para jogar acesse https://localhost:4200 e inicie a partida
 
 
