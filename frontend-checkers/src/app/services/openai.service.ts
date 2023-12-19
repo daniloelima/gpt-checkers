@@ -19,39 +19,16 @@ ${board}
 Indique um espaço no tabuleiro que contenha uma peça BP ou BQ e me retorne sua pocição no formato [posição x inicial-posição y inicial]
 `
     const data = {
-      "model": "gpt-3.5-turbo-1106",
-      "messages": [{"role": "user", "content": prompt}]
-    };
-
-    console.log(prompt);    
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.apiKey}`
-    });
-
-    console.log("ENVIEI REQUEST\n");
-    
-    return this.http.post(this.apiUrl, data, { headers });
-  }
-
-  selectMovement(jogadas: string): Observable<any> {
-    console.log(jogadas);
-    
-    let prompt = ``
-    const data = {
       "model": "gpt-3.5-turbo",
       "messages": [{"role": "user", "content": prompt}]
     };
 
-    console.log(prompt);    
-
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.apiKey}`
     });
 
-    return new Observable<any>;
-    // return this.http.post(this.apiUrl, data, { headers });
+    return this.http.post(this.apiUrl, data, { headers });
   }
+
 }

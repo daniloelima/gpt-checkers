@@ -2,10 +2,7 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
-  OnChanges,
   OnInit,
-  Renderer2,
-  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { OpenaiService } from 'src/app/services/openai.service';
@@ -224,48 +221,42 @@ const addMoveToBoard = function () {
   Game.board[x][y] += ' ' + moveToAdd;
 };
 
-const generateStringFromBoard = function(): string {
+const generateStringFromBoard = function (): string {
   let board = '';
-  let aux : string[];
-  console.log(Game.board);
-  
-  for (let i=-1; i<8; i++) {
+  let aux: string[];
+
+  for (let i = -1; i < 8; i++) {
     if (i == -1) {
-      board += "x/y  ";
+      board += 'x/y  ';
     } else {
       board += ` ${i} `;
     }
-    for (let j=0; j<8; j++) {
+    for (let j = 0; j < 8; j++) {
       if (i == -1) {
         board += `${j}   `;
       } else {
-        // console.log(Game.board[i][j].split(" "));
-        
-        aux = Game.board[i][j].split(" ").filter(letter => letter != 'w' && letter != 'b' && letter != '');
+        aux = Game.board[i][j]
+          .split(' ')
+          .filter((letter) => letter != 'w' && letter != 'b' && letter != '');
 
-        board += ` ${aux[0] == undefined || aux[0] == "" ? '__' : aux[0]} `; 
+        board += ` ${aux[0] == undefined || aux[0] == '' ? '__' : aux[0]} `;
       }
     }
-    board += "\n";
+    board += '\n';
   }
   return board;
-}
+};
 
-const parseResposta = function(resposta: string): string {
+const parseResposta = function (resposta: string): string {
   return resposta.split('[')[1].split(']')[0];
-}
+};
 
-const apiCall = function() {
+const apiCall = function () {
   const board = generateStringFromBoard();
   let posicaoInicial: string = '';
   Game.openAiService.selectPiece(board).subscribe({
     next: (response: any) => {
-      console.log(response);
-      console.log(response.choices[0].message.content);
-      console.log(parseResposta(response.choices[0].message.content));
       posicaoInicial = parseResposta(response.choices[0].message.content);
-      console.log(posicaoInicial);
-
       let x = parseInt(posicaoInicial.split('-')[0]);
       let y = parseInt(posicaoInicial.split('-')[1]);
 
@@ -278,12 +269,8 @@ const apiCall = function() {
         return;
       }
 
-      console.log(`x: ${x}, y: ${y}`);
-
       const index = x * 8 + y;
 
-      console.log(Game.elementBoard.children[index]);
-      
       Game.e = Game.elementBoard.children[index];
       if (!validClick()) {
         apiCall();
@@ -291,14 +278,9 @@ const apiCall = function() {
     },
     error: (error) => {
       console.error('Erro ao chamar a API GPT-3:', error);
-      // console.log("ESPERANDO 2 SEGUNDOS PARA MANDAR MAIS REQUISIÇÕES");
-      
-      // setTimeout(apiCall, 2000)
-      // TODO: descomentar isso depois
-      // apiCall();
     },
   });
-}
+};
 
 // Seleciona quem vai jogar
 const toMove = function () {
@@ -307,7 +289,7 @@ const toMove = function () {
     validClick();
   } else {
     Game.expectedColor = 'black';
-    apiCall()
+    apiCall();
   }
 };
 
@@ -517,7 +499,6 @@ const checkIfPieceExistsOnPosition = function (
 
   // Se chegou aqui tentando comer uma peça pode se mover.
   if (Game.tryingToTake) {
-    // Game.tryingToTake = false;
     return false;
   }
 
@@ -553,7 +534,7 @@ const possibleMoves = function (color: string) {
 
   // Sem jogadas possiveis
   if (Game.movements.length == 0 && Game.possibleTake.length == 0) {
-    console.log("Sem movimentos possiveis")
+    console.log('Sem movimentos possiveis');
     return false;
   }
 
@@ -563,7 +544,6 @@ const possibleMoves = function (color: string) {
     Game.validMovements = Game.movements;
   }
   console.log(`Movimentos possiveis: ${Game.validMovements}`);
-  
 
   // Da highlight nas possiveis jogadas
   activateSquare();
@@ -579,10 +559,10 @@ const possibleMoves = function (color: string) {
     validMoves(Game.e);
   } else {
     if (Game.validMovements.length == 1) {
-      IaMove(Game.validMovements[0])
+      IaMove(Game.validMovements[0]);
     } else {
       // TODO: criar função para chamar a api dando os movimentos possiveis.
-      IaMove(Game.validMovements[0])
+      IaMove(Game.validMovements[0]);
     }
   }
   return true;
@@ -689,45 +669,42 @@ const movePiece = function () {
 };
 
 function IaMove(jogada: number[]) {
-    // Limpa o campo de onde a peça saiu
-    clearSquare(Game.e);
-    const originalPosition = getXYFromId();
-  
-    // Move a peça
-    const x = jogada[0];
-    const y = jogada[1];
-    const index = x * 8 + y;
-    Game.e = Game.elementBoard.children[index];
-    movePiece();
-  
-    // Remove a peça que foi comida
-    removePieceTaken(originalPosition);
-  
-    // Adiciona o movimento à representação do tabuleiro
-    addMoveToBoard();
-    console.log(`Tabuleiro após jogada da IA:`)
-    console.log(Game.board);
-    
-  
-    // Reseta os listeners do board
-    resetBoard();
-  
-    if (Game.redPieces == 0 || Game.blackPieces == 0) {
-      const GameOver = new Event('GameOver');
-      Game.elementBoard.dispatchEvent(GameOver);
-      Game.redPieces = 12;
-      Game.blackPieces = 12;
-      return;
-    }
-  
-    // Muda a vez do jogador
-    changeTurn();
-  
-    if (!Game.redTurn) {
-      toMove();
-    } else {
-      addBoardEventListener();
-    }
+  // Limpa o campo de onde a peça saiu
+  clearSquare(Game.e);
+  const originalPosition = getXYFromId();
+
+  // Move a peça
+  const x = jogada[0];
+  const y = jogada[1];
+  const index = x * 8 + y;
+  Game.e = Game.elementBoard.children[index];
+  movePiece();
+
+  // Remove a peça que foi comida
+  removePieceTaken(originalPosition);
+
+  // Adiciona o movimento à representação do tabuleiro
+  addMoveToBoard();
+
+  // Reseta os listeners do board
+  resetBoard();
+
+  if (Game.redPieces == 0 || Game.blackPieces == 0) {
+    const GameOver = new Event('GameOver');
+    Game.elementBoard.dispatchEvent(GameOver);
+    Game.redPieces = 12;
+    Game.blackPieces = 12;
+    return;
+  }
+
+  // Muda a vez do jogador
+  changeTurn();
+
+  if (!Game.redTurn) {
+    toMove();
+  } else {
+    addBoardEventListener();
+  }
 }
 
 // Processamento referente a movimentação da peça
@@ -745,9 +722,7 @@ function addMovementListener(clickEvent: Event) {
 
   // Adiciona o movimento à representação do tabuleiro
   addMoveToBoard();
-  console.log(`Tabuleiro após jogada do jogador:`)
-  console.log(Game.board);
-
+  
   // Reseta os listeners do board
   resetBoard();
 
