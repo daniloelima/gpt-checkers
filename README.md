@@ -8,6 +8,8 @@ Fazer um jogo de damas usando GPT, com interface gráfica e disponibilização d
 
 A programação de funcionamento do jogo se encontra dentro de [game.component](frontend-checkers/src/app/components/game/game.component.ts), em que as requisões da api também estão dentro desse código.
 
+![Home](media/menu.png)
+
 ## Divisão
 
 O repositório foi dividido entre:
